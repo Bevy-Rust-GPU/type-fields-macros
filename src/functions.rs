@@ -204,7 +204,7 @@ fn impl_function(
 
         #phantom_derives
 
-        impl<#(#gen,)* _Type> type_fields::functional::Function<#input_tys> for #ident_struct < #(#phantom_types),* >
+        impl<#(#gen,)* _Type> type_fields::t_funk::Function<#input_tys> for #ident_struct < #(#phantom_types),* >
         #where_clause
         {
             type Output = #outputs;
