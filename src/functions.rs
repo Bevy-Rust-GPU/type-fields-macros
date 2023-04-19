@@ -170,12 +170,16 @@ fn impl_function(
         predicates: predicates.into_iter().collect(),
     };
 
+    let fn_generics = quote!();
+
     let derives = if struct_body.is_empty() {
         quote!(
-            #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+            #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, type_fields_macros::Closure)]
         )
     } else {
-        quote!()
+        quote!(
+            #[derive(type_fields_macros::Closure)]
+        )
     };
 
     let phantom_derives = if struct_body.is_empty() {
@@ -211,10 +215,10 @@ fn impl_function(
 
             #[allow(non_snake_case)]
             fn call(#input_pats : #input_tys) -> Self::Output {
-                <_Type as #ident_trait<#(#gen),*>>::#ident_fn(#input_vals)
+                <_Type as #ident_trait<#(#gen),*>>::#ident_fn #fn_generics (#input_vals)
             }
         }
 
-        type_fields::derive_closure!(#ident_struct < #(#phantom_types),* >);
+        //type_fields::derive_closure!(#ident_struct < #(#phantom_types),* >);
     ))
 }
