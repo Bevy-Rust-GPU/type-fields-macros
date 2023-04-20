@@ -1,18 +1,38 @@
 extern crate proc_macro;
 
-mod semigroup;
-mod applicative;
-mod monad;
 mod closure;
 mod copointed;
 mod functions;
-mod fmap;
-mod monoid;
 mod paths;
 mod pointed;
 
 use proc_macro::TokenStream;
 use syn::parse_macro_input;
+
+macro_rules! newtype_derive {
+    ($derive:ident :: $fn:ident (#$ident:ident, #$ty:ident) => { $($tt:tt)* }) => {
+        #[proc_macro_derive($derive)]
+        pub fn $fn(input: TokenStream) -> TokenStream {
+            let input: syn::DeriveInput = parse_macro_input!(input);
+            let $ident = input.ident;
+
+            let $ty = input
+                .generics
+                .type_params()
+                .map(|type_param| type_param.ident.clone())
+                .next()
+                .unwrap();
+
+            let out = quote::quote!(
+                $($tt)*
+            );
+
+            //panic!("{out:}");
+
+            out.into()
+        }
+    }
+}
 
 /// Create a struct and corresponding `Function` implementation
 /// for each function in the  provided trait.
@@ -49,33 +69,90 @@ pub fn copointed(input: TokenStream) -> TokenStream {
     copointed::impl_copointed(parse_macro_input!(input))
 }
 
-/// Derive `Fmap` for a newtype.
-#[proc_macro_derive(Fmap)]
-pub fn fmap(input: TokenStream) -> TokenStream {
-    fmap::impl_fmap(parse_macro_input!(input))
+// Derive `Fmap` for a newtype.
+newtype_derive! {
+    Fmap::fmap(#ident, #ty) => {
+        impl<#ty, _Function> type_fields::t_funk::Fmap<_Function> for #ident<#ty>
+        where
+            _Function: type_fields::t_funk::Closure<#ty>,
+        {
+            type Fmap = #ident<_Function::Output>;
+
+            fn fmap(self, f: _Function) -> Self::Fmap {
+                type_fields::t_funk::Pointed::point(f.call(type_fields::t_funk::Copointed::copoint(self)))
+            }
+        }
+    }
 }
 
-/// Derive `Apply` for a newtype.
-#[proc_macro_derive(Apply)]
-pub fn apply(input: TokenStream) -> TokenStream {
-    applicative::impl_apply(parse_macro_input!(input))
+// Derive `Apply` for a newtype.
+newtype_derive! {
+    Apply::apply(#ident, #ty) => {
+        impl<#ty, _Value> type_fields::t_funk::Apply<#ident<_Value>> for #ident<#ty>
+        where
+            #ty: type_fields::t_funk::Closure<_Value>,
+        {
+            type Apply = #ident<#ty::Output>;
+
+            fn apply(self, a: #ident<_Value>) -> Self::Apply
+            where
+                #ty: type_fields::t_funk::Closure<_Value>,
+            {
+                type_fields::t_funk::Pointed::point(
+                    type_fields::t_funk::Copointed::copoint(self)
+                        .call(type_fields::t_funk::Copointed::copoint(a)),
+                )
+            }
+        }
+    }
 }
 
-/// Derive `Chain` for a newtype.
-#[proc_macro_derive(Chain)]
-pub fn chain(input: TokenStream) -> TokenStream {
-    monad::impl_chain(parse_macro_input!(input))
+// Derive `Chain` for a newtype.
+newtype_derive! {
+    Chain::chain(#ident, #ty) => {
+        impl<#ty, _Function> type_fields::t_funk::Chain<_Function> for #ident<#ty>
+        where
+            _Function: type_fields::t_funk::Closure<#ty>,
+        {
+            type Chain = _Function::Output;
+
+            fn chain(self, f: _Function) -> Self::Chain {
+                f.call(type_fields::t_funk::Copointed::copoint(self))
+            }
+        }
+    }
 }
 
-/// Derive `Mempty` for a newtype.
-#[proc_macro_derive(Mempty)]
-pub fn mempty(input: TokenStream) -> TokenStream {
-    monoid::impl_mempty(parse_macro_input!(input))
+// Derive `Mempty` for a newtype.
+newtype_derive! {
+    Mempty::mempty(#ident, #ty) => {
+        impl<#ty> type_fields::t_funk::Mempty for #ident<#ty>
+        where
+            #ty: type_fields::t_funk::Mempty,
+        {
+            type Mempty = #ident<#ty::Mempty>;
+
+            fn mempty() -> Self::Mempty {
+                type_fields::t_funk::Pointed::point(#ty::mempty())
+            }
+        }
+    }
 }
 
-/// Derive `Mappend` for a newtype.
-#[proc_macro_derive(Mappend)]
-pub fn mappend(input: TokenStream) -> TokenStream {
-    semigroup::impl_mappend(parse_macro_input!(input))
-}
+// Derive `Mappend` for a newtype.
+newtype_derive! {
+    Mappend::mappend(#ident, #ty) => {
+        impl<#ty, _Type> type_fields::t_funk::Mappend<#ident<_Type>> for #ident<#ty>
+        where
+            #ty: type_fields::t_funk::Mappend<_Type>,
+        {
+            type Mappend = #ident<#ty::Mappend>;
 
+            fn mappend(self, t: #ident<_Type>) -> Self::Mappend {
+                type_fields::t_funk::Pointed::point(
+                    self.0.mappend(type_fields::t_funk::Copointed::copoint(t)),
+                )
+            }
+        }
+    }
+}
