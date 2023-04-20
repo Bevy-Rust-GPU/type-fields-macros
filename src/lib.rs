@@ -6,7 +6,7 @@ mod monad;
 mod closure;
 mod copointed;
 mod functions;
-mod functor;
+mod fmap;
 mod monoid;
 mod paths;
 mod pointed;
@@ -49,33 +49,33 @@ pub fn copointed(input: TokenStream) -> TokenStream {
     copointed::impl_copointed(parse_macro_input!(input))
 }
 
-/// Derive `Functor` for a newtype.
-#[proc_macro_derive(Functor)]
-pub fn functor(input: TokenStream) -> TokenStream {
-    functor::impl_functor(parse_macro_input!(input))
+/// Derive `Fmap` for a newtype.
+#[proc_macro_derive(Fmap)]
+pub fn fmap(input: TokenStream) -> TokenStream {
+    fmap::impl_fmap(parse_macro_input!(input))
 }
 
-/// Derive `Applicative` for a newtype.
-#[proc_macro_derive(Applicative)]
-pub fn applicative(input: TokenStream) -> TokenStream {
-    applicative::impl_applicative(parse_macro_input!(input))
+/// Derive `Apply` for a newtype.
+#[proc_macro_derive(Apply)]
+pub fn apply(input: TokenStream) -> TokenStream {
+    applicative::impl_apply(parse_macro_input!(input))
 }
 
-/// Derive `Monad` for a newtype.
-#[proc_macro_derive(Monad)]
-pub fn monad(input: TokenStream) -> TokenStream {
-    monad::impl_monad(parse_macro_input!(input))
+/// Derive `Chain` for a newtype.
+#[proc_macro_derive(Chain)]
+pub fn chain(input: TokenStream) -> TokenStream {
+    monad::impl_chain(parse_macro_input!(input))
 }
 
-/// Derive `Monoid` for a newtype.
-#[proc_macro_derive(Monoid)]
-pub fn monoid(input: TokenStream) -> TokenStream {
-    monoid::impl_monoid(parse_macro_input!(input))
+/// Derive `Mempty` for a newtype.
+#[proc_macro_derive(Mempty)]
+pub fn mempty(input: TokenStream) -> TokenStream {
+    monoid::impl_mempty(parse_macro_input!(input))
 }
 
-/// Derive `Semigroup` for a newtype.
-#[proc_macro_derive(Semigroup)]
-pub fn semigroup(input: TokenStream) -> TokenStream {
-    semigroup::impl_semigroup(parse_macro_input!(input))
+/// Derive `Mappend` for a newtype.
+#[proc_macro_derive(Mappend)]
+pub fn mappend(input: TokenStream) -> TokenStream {
+    semigroup::impl_mappend(parse_macro_input!(input))
 }
 

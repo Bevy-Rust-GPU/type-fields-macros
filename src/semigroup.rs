@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::DeriveInput;
 
-pub fn impl_semigroup(input: DeriveInput) -> TokenStream {
+pub fn impl_mappend(input: DeriveInput) -> TokenStream {
     let ident = input.ident;
 
     let tys = input

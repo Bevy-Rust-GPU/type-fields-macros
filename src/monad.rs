@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::DeriveInput;
 
-pub fn impl_monad(input: DeriveInput) -> TokenStream {
+pub fn impl_chain(input: DeriveInput) -> TokenStream {
     let ident = input.ident;
 
     let tys = input
@@ -12,9 +12,9 @@ pub fn impl_monad(input: DeriveInput) -> TokenStream {
         .collect::<Vec<_>>();
 
     let out = quote!(
-        impl<#(#tys),*, _Function> crate::t_funk::Chain<_Function> for #ident<#(#tys),*>
+        impl<#(#tys),*, _Function> type_fields::t_funk::Chain<_Function> for #ident<#(#tys),*>
         where
-            _Function: crate::t_funk::Closure<#(#tys),*>,
+            _Function: type_fields::t_funk::Closure<#(#tys),*>,
         {
             type Chain = _Function::Output;
 

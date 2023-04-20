@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::DeriveInput;
 
-pub fn impl_functor(input: DeriveInput) -> TokenStream {
+pub fn impl_fmap(input: DeriveInput) -> TokenStream {
     let ident = input.ident;
 
     let tys = input
