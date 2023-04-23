@@ -3,6 +3,7 @@ extern crate proc_macro;
 mod closure;
 mod copointed;
 mod functions;
+mod lenses;
 mod paths;
 mod pointed;
 
@@ -40,6 +41,14 @@ macro_rules! newtype_derive {
 #[proc_macro_derive(Field)]
 pub fn paths(input: TokenStream) -> TokenStream {
     paths::impl_paths(parse_macro_input!(input))
+}
+
+/// For each field in the annotated struct:
+/// - Implement getter / setter Function types
+/// - Define a const representing the lens over said getter / setter
+#[proc_macro_derive(Lenses)]
+pub fn lenses(input: TokenStream) -> TokenStream {
+    lenses::impl_lenses(parse_macro_input!(input))
 }
 
 /// Create a struct and corresponding `Function` implementation
@@ -91,12 +100,12 @@ newtype_derive! {
     Replace::replace(#ident, #ty) => {
         impl<#ty, U> type_fields::t_funk::Replace<U> for #ident<#ty>
         where
-            #ident<#ty>: type_fields::t_funk::Fmap<type_fields::t_funk::CurriedA<type_fields::t_funk::Const, U>>,
+            #ident<#ty>: type_fields::t_funk::Fmap<type_fields::t_funk::CurriedA<type_fields::t_funk::function::Const, U>>,
         {
-            type Replace = <#ident<#ty> as type_fields::t_funk::Fmap<type_fields::t_funk::CurriedA<type_fields::t_funk::Const, U>>>::Fmap;
+            type Replace = <#ident<#ty> as type_fields::t_funk::Fmap<type_fields::t_funk::CurriedA<type_fields::t_funk::function::Const, U>>>::Fmap;
 
             fn replace(self, t: U) -> Self::Replace {
-                type_fields::t_funk::Fmap::fmap(self, type_fields::t_funk::Curry::curry_a(type_fields::t_funk::Const, t))
+                type_fields::t_funk::Fmap::fmap(self, type_fields::t_funk::Curry::curry_a(type_fields::t_funk::function::Const, t))
             }
         }
     }
