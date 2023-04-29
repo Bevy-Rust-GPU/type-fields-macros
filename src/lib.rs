@@ -88,8 +88,10 @@ newtype_derive! {
         {
             type Fmap = #ident<_Function::Output>;
 
+            #[allow(non_snake_case)]
             fn fmap(self, f: _Function) -> Self::Fmap {
-                type_fields::t_funk::Pointed::point(f.call(type_fields::t_funk::Copointed::copoint(self)))
+                let #ident(#ty) = self;
+                #ident(f.call(#ty))
             }
         }
     }
@@ -100,12 +102,12 @@ newtype_derive! {
     Replace::replace(#ident, #ty) => {
         impl<#ty, U> type_fields::t_funk::Replace<U> for #ident<#ty>
         where
-            #ident<#ty>: type_fields::t_funk::Fmap<type_fields::t_funk::CurriedA<type_fields::t_funk::function::Const, U>>,
+            #ident<#ty>: type_fields::t_funk::Fmap<type_fields::t_funk::Prefixed<type_fields::t_funk::function::Const, U>>,
         {
-            type Replace = <#ident<#ty> as type_fields::t_funk::Fmap<type_fields::t_funk::CurriedA<type_fields::t_funk::function::Const, U>>>::Fmap;
+            type Replace = <#ident<#ty> as type_fields::t_funk::Fmap<type_fields::t_funk::Prefixed<type_fields::t_funk::function::Const, U>>>::Fmap;
 
             fn replace(self, t: U) -> Self::Replace {
-                type_fields::t_funk::Fmap::fmap(self, type_fields::t_funk::Curry::curry_a(type_fields::t_funk::function::Const, t))
+                type_fields::t_funk::Fmap::fmap(self, type_fields::t_funk::Curry::prefix(type_fields::t_funk::function::Const, t))
             }
         }
     }
@@ -134,13 +136,15 @@ newtype_derive! {
         {
             type Apply = #ident<#ty::Output>;
 
+            #[allow(non_snake_case)]
             fn apply(self, a: #ident<_Value>) -> Self::Apply
             where
                 #ty: type_fields::t_funk::Closure<_Value>,
             {
-                type_fields::t_funk::Pointed::point(
-                    type_fields::t_funk::Copointed::copoint(self)
-                        .call(type_fields::t_funk::Copointed::copoint(a)),
+                let #ident(#ty) = self;
+                let #ident(_Value) = a;
+                #ident(
+                    #ty.call(_Value),
                 )
             }
         }
@@ -156,14 +160,17 @@ newtype_derive! {
         {
             type Chain = _Function::Output;
 
+            #[allow(non_snake_case)]
             fn chain(self, f: _Function) -> Self::Chain {
-                f.call(type_fields::t_funk::Copointed::copoint(self))
+                let #ident(#ty) = self;
+                f.call(#ty)
             }
         }
     }
 }
 
 // Derive `Then` for a newtype.
+/*
 newtype_derive! {
     Then::then(#ident, #ty) => {
         impl<#ty, _Function> type_fields::t_funk::Then<_Function> for #ident<#ty>
@@ -175,6 +182,19 @@ newtype_derive! {
 
             fn then(self, f: _Function) -> Self::Then {
                type_fields::t_funk::Apply::apply(type_fields::t_funk::Replace::replace(self, type_fields::t_funk::function::Id), f)
+            }
+        }
+    }
+}
+*/
+newtype_derive! {
+    Then::then(#ident, #ty) => {
+        impl<#ty, _Function> type_fields::t_funk::Then<_Function> for #ident<#ty> where #ident<#ty>: type_fields::t_funk::Chain<type_fields::t_funk::Prefixed<type_fields::t_funk::function::Const, _Function>>
+        {
+            type Then = <#ident<#ty> as type_fields::t_funk::Chain<type_fields::t_funk::Prefixed<type_fields::t_funk::function::Const, _Function>>>::Chain;
+
+            fn then(self, f: _Function) -> Self::Then {
+               type_fields::t_funk::Chain::<_>::chain(self, type_fields::t_funk::Curry::prefix(type_fields::t_funk::function::Const, f))
             }
         }
     }
@@ -205,10 +225,12 @@ newtype_derive! {
         {
             type Mappend = #ident<#ty::Mappend>;
 
+            #[allow(non_snake_case)]
             fn mappend(self, t: #ident<_Type>) -> Self::Mappend {
-                type_fields::t_funk::Pointed::point(
-                    type_fields::t_funk::Copointed::copoint(self)
-                        .mappend(type_fields::t_funk::Copointed::copoint(t)),
+                let #ident(#ty) = self;
+                let #ident(_Type) = t;
+                #ident(
+                    #ty.mappend(_Type),
                 )
             }
         }
@@ -266,10 +288,12 @@ newtype_derive! {
         {
             type Foldr = #ident<<#ty as type_fields::t_funk::Foldr<_Function, _Acc>>::Foldr>;
 
+            #[allow(non_snake_case)]
             fn foldr(self, f: _Function, z: _Acc) -> Self::Foldr {
-                type_fields::t_funk::Pointed::point(
+                let #ident(#ty) = self;
+                #ident(
                     type_fields::t_funk::Foldr::foldr(
-                        type_fields::t_funk::Copointed::copoint(self),
+                        #ty,
                         f,
                         z
                     )
@@ -288,10 +312,12 @@ newtype_derive! {
         {
             type Foldl = #ident<<#ty as type_fields::t_funk::Foldl<_Function, _Acc>>::Foldl>;
 
+            #[allow(non_snake_case)]
             fn foldl(self, f: _Function, z: _Acc) -> Self::Foldl {
-                type_fields::t_funk::Pointed::point(
+                let #ident(#ty) = self;
+                #ident(
                     type_fields::t_funk::Foldl::foldl(
-                        type_fields::t_funk::Copointed::copoint(self),
+                        #ty,
                         f,
                         z
                     )
@@ -320,11 +346,11 @@ newtype_derive! {
 // Derive `Id` for a `Function`.
 newtype_derive! {
     Id::id(#ident, #ty) => {
-        impl<#ty> type_fields::t_funk::category::Id for #ident<#ty> {
-            type Id = Self;
+        impl<#ty> type_fields::t_funk::category::Id for #ident<#ty> where #ident<#ty>: Default {
+            type Id = type_fields::t_funk::function::Id;
 
-            fn id(self) -> Self::Id {
-                self
+            fn id() -> Self::Id {
+                type_fields::t_funk::function::Id
             }
         }
     }
@@ -333,17 +359,32 @@ newtype_derive! {
 // Derive `Compose` for a `Function`.
 newtype_derive! {
     Compose::compose(#ident, #ty) => {
-        impl<_Function, #ty> type_fields::t_funk::Compose<_Function> for #ident<#ty> {
-            fn compose(self, f: _Function) -> type_fields::t_funk::Composed<Self, _Function> {
+        impl<_Function, #ty> type_fields::t_funk::category::Compose<_Function> for #ident<#ty> {
+            type Compose = type_fields::t_funk::Composed<Self, _Function>;
+            fn compose(self, f: _Function) -> Self::Compose {
                 type_fields::t_funk::Pointed::point((self, f))
             }
         }
     }
 }
 
-// Derive `First` for a `Function`.
+// Derive `Arr` for a `Function`.
 newtype_derive! {
-    First::first(#ident, #ty) => {
+    Arr::arr(#ident, #ty) => {
+        impl<_Function, #ty> type_fields::t_funk::arrow::Arr<_Function> for #ident<#ty>
+        {
+            type Arr = _Function;
+
+            fn arr(f: _Function) -> Self::Arr {
+                f
+            }
+        }
+    }
+}
+
+// Derive `arrow::First` for a `Function`.
+newtype_derive! {
+    ArrowFirst::arrow_first(#ident, #ty) => {
         impl<#ty> type_fields::t_funk::arrow::First for #ident<#ty>
         where
             #ident<#ty>: type_fields::t_funk::Split<type_fields::t_funk::function::Id>,
@@ -357,9 +398,9 @@ newtype_derive! {
     }
 }
 
-// Derive `Second` for a `Function`.
+// Derive `arrow::Second` for a `Function`.
 newtype_derive! {
-    Second::second(#ident, #ty) => {
+    ArrowSecond::arrow_second(#ident, #ty) => {
         impl<#ty> type_fields::t_funk::arrow::Second for #ident<#ty>
         where
             type_fields::t_funk::function::Id: type_fields::t_funk::Split<#ident<#ty>>,
@@ -368,6 +409,43 @@ newtype_derive! {
 
             fn second(self) -> Self::Second {
                 type_fields::t_funk::Split::split(type_fields::t_funk::function::Id, self)
+            }
+        }
+    }
+}
+
+// Derive `Split` for a `Function`.
+newtype_derive! {
+    Split::split(#ident, #ty) => {
+        impl<_Arrow, #ty> type_fields::t_funk::Split<_Arrow> for #ident<#ty> {
+            type Split = type_fields::t_funk::Splitted<Self, _Arrow>;
+
+            fn split(self, a: _Arrow) -> Self::Split {
+                type_fields::t_funk::Pointed::point((self, a))
+            }
+        }
+    }
+}
+
+// Derive `Fanout` for a `Split` implementor.
+newtype_derive! {
+    Fanout::fanout(#ident, #ty) => {
+        impl<_Arrow, #ty> type_fields::t_funk::Fanout<_Arrow> for #ident<#ty>
+        where
+            #ident<#ty>: type_fields::t_funk::Split<_Arrow>,
+            #ident<#ty>: type_fields::t_funk::Arr<type_fields::t_funk::MakePair>,
+            <#ident<#ty> as type_fields::t_funk::Split<_Arrow>>::Split: type_fields::t_funk::category::Compose<<#ident<#ty> as type_fields::t_funk::Arr<type_fields::t_funk::MakePair>>::Arr>,
+            <#ident<#ty> as type_fields::t_funk::Arr<type_fields::t_funk::MakePair>>::Arr: type_fields::t_funk::category::Compose<<#ident<#ty> as type_fields::t_funk::Split<_Arrow>>::Split>,
+        {
+            type Fanout = <<#ident<#ty> as type_fields::t_funk::Arr<type_fields::t_funk::MakePair>>::Arr as type_fields::t_funk::category::ComposeL<
+                <#ident<#ty> as type_fields::t_funk::Split<_Arrow>>::Split,
+            >>::ComposeL;
+
+            fn fanout(self, f: _Arrow) -> Self::Fanout {
+                type_fields::t_funk::ComposeL::compose_l(
+                    <#ident<#ty> as type_fields::t_funk::Arr<type_fields::t_funk::MakePair>>::arr(crate::t_funk::MakePair),
+                    crate::t_funk::Split::split(self, f)
+                )
             }
         }
     }

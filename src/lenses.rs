@@ -41,9 +41,9 @@ pub fn impl_lenses(input: DeriveInput) -> TokenStream {
                 PartialOrd,
                 Ord,
                 Hash,
-                type_fields::macros::Id,
                 type_fields::macros::Closure,
-                type_fields::macros::Compose,
+                type_fields::macros::category::Id,
+                type_fields::macros::category::Compose,
             )]
             #vis struct #getter;
 
@@ -65,9 +65,9 @@ pub fn impl_lenses(input: DeriveInput) -> TokenStream {
                 PartialOrd,
                 Ord,
                 Hash,
-                type_fields::macros::Id,
                 type_fields::macros::Closure,
-                type_fields::macros::Compose,
+                type_fields::macros::category::Id,
+                type_fields::macros::category::Compose,
             )]
             #vis struct #setter;
 

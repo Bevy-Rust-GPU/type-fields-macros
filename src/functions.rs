@@ -4,8 +4,7 @@ use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
 use syn::{
     parse_quote, token::Where, visit_mut::VisitMut, GenericParam, Ident, ItemTrait, Pat, PatIdent,
-    Path, PathArguments, PathSegment, TraitItemFn, Type, TypePath, WhereClause,
-    WherePredicate,
+    Path, PathArguments, PathSegment, TraitItemFn, Type, TypePath, WhereClause, WherePredicate,
 };
 
 struct FunctionsVisitor;
@@ -174,11 +173,27 @@ fn impl_function(
 
     let derives = if struct_body.is_empty() {
         quote!(
-            #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, type_fields_macros::Closure)]
+            #[derive(
+                Debug,
+                Default,
+                Copy,
+                Clone, PartialEq,
+                Eq,
+                PartialOrd,
+                Ord,
+                Hash,
+                type_fields_macros::Closure,
+                type_fields_macros::Id,
+                type_fields_macros::Compose
+            )]
         )
     } else {
         quote!(
-            #[derive(type_fields_macros::Closure)]
+            #[derive(
+                type_fields_macros::Closure,
+                type_fields_macros::Id,
+                type_fields_macros::Compose
+            )]
         )
     };
 
