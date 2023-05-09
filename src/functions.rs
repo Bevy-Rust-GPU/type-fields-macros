@@ -184,7 +184,10 @@ fn impl_function(
                 Hash,
                 type_fields_macros::Closure,
                 type_fields_macros::Id,
-                type_fields_macros::Compose
+                type_fields_macros::Compose,
+                type_fields_macros::Arr,
+                type_fields_macros::Fanout,
+                type_fields_macros::Split,
             )]
         )
     } else {
@@ -192,7 +195,10 @@ fn impl_function(
             #[derive(
                 type_fields_macros::Closure,
                 type_fields_macros::Id,
-                type_fields_macros::Compose
+                type_fields_macros::Compose,
+                type_fields_macros::Arr,
+                type_fields_macros::Fanout,
+                type_fields_macros::Split,
             )]
         )
     };

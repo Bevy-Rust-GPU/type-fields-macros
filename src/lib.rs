@@ -82,7 +82,7 @@ pub fn copointed(input: TokenStream) -> TokenStream {
 // Derive `Fmap` for a newtype.
 newtype_derive! {
     Fmap::fmap(#ident, #ty) => {
-        impl<#ty, _Function> type_fields::t_funk::Fmap<_Function> for #ident<#ty>
+        impl<_Function, #ty> type_fields::t_funk::Fmap<_Function> for #ident<#ty>
         where
             _Function: type_fields::t_funk::Closure<#ty>,
         {
@@ -102,21 +102,21 @@ newtype_derive! {
     Replace::replace(#ident, #ty) => {
         impl<#ty, U> type_fields::t_funk::Replace<U> for #ident<#ty>
         where
-            #ident<#ty>: type_fields::t_funk::Fmap<type_fields::t_funk::Prefixed<type_fields::t_funk::function::Const, U>>,
+            #ident<#ty>: type_fields::t_funk::Fmap<type_fields::t_funk::Curry2A<type_fields::t_funk::function::Const, U>>,
         {
-            type Replace = <#ident<#ty> as type_fields::t_funk::Fmap<type_fields::t_funk::Prefixed<type_fields::t_funk::function::Const, U>>>::Fmap;
+            type Replace = <#ident<#ty> as type_fields::t_funk::Fmap<type_fields::t_funk::Curry2A<type_fields::t_funk::function::Const, U>>>::Fmap;
 
             fn replace(self, t: U) -> Self::Replace {
-                type_fields::t_funk::Fmap::fmap(self, type_fields::t_funk::Curry::prefix(type_fields::t_funk::function::Const, t))
+                type_fields::t_funk::Fmap::fmap(self, type_fields::t_funk::Curry2::prefix(type_fields::t_funk::function::Const, t))
             }
         }
     }
 }
 
-// Derive `Apply` for a newtype.
+// Derive `Pure` for a newtype.
 newtype_derive! {
     Pure::pure(#ident, #ty) => {
-        impl<#ty> type_fields::t_funk::Pure for #ident<#ty>
+        impl<#ty> type_fields::t_funk::applicative::Pure for #ident<#ty>
         {
             type Pure<U> = #ident<U>;
 
@@ -154,7 +154,7 @@ newtype_derive! {
 // Derive `Chain` for a newtype.
 newtype_derive! {
     Chain::chain(#ident, #ty) => {
-        impl<#ty, _Function> type_fields::t_funk::Chain<_Function> for #ident<#ty>
+        impl<#ty, _Function> type_fields::t_funk::monad::Chain<_Function> for #ident<#ty>
         where
             _Function: type_fields::t_funk::Closure<#ty>,
         {
@@ -189,12 +189,12 @@ newtype_derive! {
 */
 newtype_derive! {
     Then::then(#ident, #ty) => {
-        impl<#ty, _Function> type_fields::t_funk::Then<_Function> for #ident<#ty> where #ident<#ty>: type_fields::t_funk::Chain<type_fields::t_funk::Prefixed<type_fields::t_funk::function::Const, _Function>>
+        impl<#ty, _Function> type_fields::t_funk::Then<_Function> for #ident<#ty> where #ident<#ty>: type_fields::t_funk::monad::Chain<type_fields::t_funk::Curry2A<type_fields::t_funk::function::Const, _Function>>
         {
-            type Then = <#ident<#ty> as type_fields::t_funk::Chain<type_fields::t_funk::Prefixed<type_fields::t_funk::function::Const, _Function>>>::Chain;
+            type Then = <#ident<#ty> as type_fields::t_funk::monad::Chain<type_fields::t_funk::Curry2A<type_fields::t_funk::function::Const, _Function>>>::Chain;
 
             fn then(self, f: _Function) -> Self::Then {
-               type_fields::t_funk::Chain::<_>::chain(self, type_fields::t_funk::Curry::prefix(type_fields::t_funk::function::Const, f))
+               type_fields::t_funk::monad::Chain::<_>::chain(self, type_fields::t_funk::Curry2::prefix(type_fields::t_funk::function::Const, f))
             }
         }
     }
@@ -210,7 +210,7 @@ newtype_derive! {
             type Mempty = #ident<#ty::Mempty>;
 
             fn mempty() -> Self::Mempty {
-                type_fields::t_funk::Pointed::point(#ty::mempty())
+                #ident(#ty::mempty())
             }
         }
     }
