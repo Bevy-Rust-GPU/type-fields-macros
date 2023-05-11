@@ -79,6 +79,17 @@ pub fn copointed(input: TokenStream) -> TokenStream {
     copointed::impl_copointed(parse_macro_input!(input))
 }
 
+/// Derive `Fmap` and `Replace` for a newtype
+#[proc_macro_attribute]
+pub fn functor(_: TokenStream, input: TokenStream) -> TokenStream {
+    let input: proc_macro2::TokenStream = input.into();
+    quote::quote!(
+        #[derive(type_fields::macros::functor::Fmap, type_fields::macros::functor::Replace)]
+        #input
+    )
+    .into()
+}
+
 // Derive `Fmap` for a newtype.
 newtype_derive! {
     Fmap::fmap(#ident, #ty) => {
@@ -111,6 +122,16 @@ newtype_derive! {
             }
         }
     }
+}
+
+#[proc_macro_attribute]
+pub fn applicative(_: TokenStream, input: TokenStream) -> TokenStream {
+    let input: proc_macro2::TokenStream = input.into();
+    quote::quote!(
+        #[derive(type_fields::macros::applicative::Pure, type_fields::macros::applicative::Apply)]
+        #input
+    )
+    .into()
 }
 
 // Derive `Pure` for a newtype.
@@ -149,6 +170,16 @@ newtype_derive! {
             }
         }
     }
+}
+
+#[proc_macro_attribute]
+pub fn monad(_: TokenStream, input: TokenStream) -> TokenStream {
+    let input: proc_macro2::TokenStream = input.into();
+    quote::quote!(
+        #[derive(type_fields::macros::monad::Chain, type_fields::macros::monad::Then)]
+        #input
+    )
+    .into()
 }
 
 // Derive `Chain` for a newtype.
@@ -200,20 +231,14 @@ newtype_derive! {
     }
 }
 
-// Derive `Mempty` for a newtype.
-newtype_derive! {
-    Mempty::mempty(#ident, #ty) => {
-        impl<#ty> type_fields::t_funk::Mempty for #ident<#ty>
-        where
-            #ty: type_fields::t_funk::Mempty,
-        {
-            type Mempty = #ident<#ty::Mempty>;
-
-            fn mempty() -> Self::Mempty {
-                #ident(#ty::mempty())
-            }
-        }
-    }
+#[proc_macro_attribute]
+pub fn semigroup(_: TokenStream, input: TokenStream) -> TokenStream {
+    let input: proc_macro2::TokenStream = input.into();
+    quote::quote!(
+        #[derive(type_fields::macros::semigroup::Mappend)]
+        #input
+    )
+    .into()
 }
 
 // Derive `Mappend` for a newtype.
@@ -235,12 +260,38 @@ newtype_derive! {
             }
         }
 
-        impl<#ty> type_fields::t_funk::Mappend<()> for #ident<#ty>
+        impl<#ty> type_fields::t_funk::Mappend<type_fields::t_funk::list::hlist::Nil> for #ident<#ty>
         {
             type Mappend = #ident<#ty>;
 
-            fn mappend(self, _: ()) -> Self::Mappend {
+            fn mappend(self, _: type_fields::t_funk::list::hlist::Nil) -> Self::Mappend {
                 self
+            }
+        }
+    }
+}
+
+#[proc_macro_attribute]
+pub fn monoid(_: TokenStream, input: TokenStream) -> TokenStream {
+    let input: proc_macro2::TokenStream = input.into();
+    quote::quote!(
+        #[derive(type_fields::macros::monoid::Mempty, type_fields::macros::monoid::Mconcat)]
+        #input
+    )
+    .into()
+}
+
+// Derive `Mempty` for a newtype.
+newtype_derive! {
+    Mempty::mempty(#ident, #ty) => {
+        impl<#ty> type_fields::t_funk::Mempty for #ident<#ty>
+        where
+            #ty: type_fields::t_funk::Mempty,
+        {
+            type Mempty = #ident<#ty::Mempty>;
+
+            fn mempty() -> Self::Mempty {
+                #ident(#ty::mempty())
             }
         }
     }
@@ -260,6 +311,16 @@ newtype_derive! {
             }
         }
     }
+}
+
+#[proc_macro_attribute]
+pub fn foldable(_: TokenStream, input: TokenStream) -> TokenStream {
+    let input: proc_macro2::TokenStream = input.into();
+    quote::quote!(
+        #[derive(type_fields::macros::foldable::FoldMap, type_fields::macros::foldable::Foldl, type_fields::macros::foldable::Foldr)]
+        #input
+    )
+    .into()
 }
 
 // Derive `FoldMap` for a newtype.
@@ -343,6 +404,16 @@ newtype_derive! {
     }
 }
 
+#[proc_macro_attribute]
+pub fn category(_: TokenStream, input: TokenStream) -> TokenStream {
+    let input: proc_macro2::TokenStream = input.into();
+    quote::quote!(
+        #[derive(type_fields::macros::category::Id, type_fields::macros::category::Compose)]
+        #input
+    )
+    .into()
+}
+
 // Derive `Id` for a `Function`.
 newtype_derive! {
     Id::id(#ident, #ty) => {
@@ -362,10 +433,26 @@ newtype_derive! {
         impl<_Function, #ty> type_fields::t_funk::category::Compose<_Function> for #ident<#ty> {
             type Compose = type_fields::t_funk::Composed<Self, _Function>;
             fn compose(self, f: _Function) -> Self::Compose {
-                type_fields::t_funk::Pointed::point((self, f))
+                type_fields::t_funk::Composed(self, f)
             }
         }
     }
+}
+
+#[proc_macro_attribute]
+pub fn arrow(_: TokenStream, input: TokenStream) -> TokenStream {
+    let input: proc_macro2::TokenStream = input.into();
+    quote::quote!(
+        #[derive(
+            type_fields::macros::arrow::Arr,
+            type_fields::macros::arrow::Split,
+            type_fields::macros::arrow::Fanout,
+            type_fields::macros::arrow::First,
+            type_fields::macros::arrow::Second
+        )]
+        #input
+    )
+    .into()
 }
 
 // Derive `Arr` for a `Function`.
@@ -421,7 +508,7 @@ newtype_derive! {
             type Split = type_fields::t_funk::Splitted<Self, _Arrow>;
 
             fn split(self, a: _Arrow) -> Self::Split {
-                type_fields::t_funk::Pointed::point((self, a))
+                type_fields::t_funk::Splitted(self, a)
             }
         }
     }
