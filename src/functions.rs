@@ -182,23 +182,17 @@ fn impl_function(
                 PartialOrd,
                 Ord,
                 Hash,
-                type_fields_macros::Closure,
-                type_fields_macros::Id,
-                type_fields_macros::Compose,
-                type_fields_macros::Arr,
-                type_fields_macros::Fanout,
-                type_fields_macros::Split,
+                type_fields::macros::Closure,
+                type_fields::macros::category::Category,
+                type_fields::macros::arrow::Arrow,
             )]
         )
     } else {
         quote!(
             #[derive(
-                type_fields_macros::Closure,
-                type_fields_macros::Id,
-                type_fields_macros::Compose,
-                type_fields_macros::Arr,
-                type_fields_macros::Fanout,
-                type_fields_macros::Split,
+                type_fields::macros::Closure,
+                type_fields::macros::category::Category,
+                type_fields::macros::arrow::Arrow,
             )]
         )
     };

@@ -79,15 +79,11 @@ pub fn copointed(input: TokenStream) -> TokenStream {
     copointed::impl_copointed(parse_macro_input!(input))
 }
 
-/// Derive `Fmap` and `Replace` for a newtype
-#[proc_macro_attribute]
-pub fn functor(_: TokenStream, input: TokenStream) -> TokenStream {
-    let input: proc_macro2::TokenStream = input.into();
-    quote::quote!(
-        #[derive(type_fields::macros::functor::Fmap, type_fields::macros::functor::Replace)]
-        #input
-    )
-    .into()
+#[proc_macro_derive(Functor)]
+pub fn functor(input: TokenStream) -> TokenStream {
+    let fmap = fmap(input.clone());
+    let replace = replace(input);
+    fmap.into_iter().chain(replace.into_iter()).collect()
 }
 
 // Derive `Fmap` for a newtype.
@@ -118,20 +114,17 @@ newtype_derive! {
             type Replace = <#ident<#ty> as type_fields::t_funk::Fmap<type_fields::t_funk::Curry2A<type_fields::t_funk::function::Const, U>>>::Fmap;
 
             fn replace(self, t: U) -> Self::Replace {
-                type_fields::t_funk::Fmap::fmap(self, type_fields::t_funk::Curry2::prefix(type_fields::t_funk::function::Const, t))
+                type_fields::t_funk::Fmap::fmap(self, type_fields::t_funk::Curry2::prefix2(type_fields::t_funk::function::Const, t))
             }
         }
     }
 }
 
-#[proc_macro_attribute]
-pub fn applicative(_: TokenStream, input: TokenStream) -> TokenStream {
-    let input: proc_macro2::TokenStream = input.into();
-    quote::quote!(
-        #[derive(type_fields::macros::applicative::Pure, type_fields::macros::applicative::Apply)]
-        #input
-    )
-    .into()
+#[proc_macro_derive(Applicative)]
+pub fn applicative(input: TokenStream) -> TokenStream {
+    let pure = pure(input.clone());
+    let apply = apply(input);
+    pure.into_iter().chain(apply.into_iter()).collect()
 }
 
 // Derive `Pure` for a newtype.
@@ -172,14 +165,11 @@ newtype_derive! {
     }
 }
 
-#[proc_macro_attribute]
-pub fn monad(_: TokenStream, input: TokenStream) -> TokenStream {
-    let input: proc_macro2::TokenStream = input.into();
-    quote::quote!(
-        #[derive(type_fields::macros::monad::Chain, type_fields::macros::monad::Then)]
-        #input
-    )
-    .into()
+#[proc_macro_derive(Monad)]
+pub fn monad(input: TokenStream) -> TokenStream {
+    let chain = chain(input.clone());
+    let then = then(input);
+    chain.into_iter().chain(then.into_iter()).collect()
 }
 
 // Derive `Chain` for a newtype.
@@ -225,20 +215,16 @@ newtype_derive! {
             type Then = <#ident<#ty> as type_fields::t_funk::monad::Chain<type_fields::t_funk::Curry2A<type_fields::t_funk::function::Const, _Function>>>::Chain;
 
             fn then(self, f: _Function) -> Self::Then {
-               type_fields::t_funk::monad::Chain::<_>::chain(self, type_fields::t_funk::Curry2::prefix(type_fields::t_funk::function::Const, f))
+               type_fields::t_funk::monad::Chain::<_>::chain(self, type_fields::t_funk::Curry2::prefix2(type_fields::t_funk::function::Const, f))
             }
         }
     }
 }
 
-#[proc_macro_attribute]
-pub fn semigroup(_: TokenStream, input: TokenStream) -> TokenStream {
-    let input: proc_macro2::TokenStream = input.into();
-    quote::quote!(
-        #[derive(type_fields::macros::semigroup::Mappend)]
-        #input
-    )
-    .into()
+#[proc_macro_derive(Semigroup)]
+pub fn semigroup(input: TokenStream) -> TokenStream {
+    let mappend = mappend(input.clone());
+    mappend.into()
 }
 
 // Derive `Mappend` for a newtype.
@@ -271,14 +257,11 @@ newtype_derive! {
     }
 }
 
-#[proc_macro_attribute]
-pub fn monoid(_: TokenStream, input: TokenStream) -> TokenStream {
-    let input: proc_macro2::TokenStream = input.into();
-    quote::quote!(
-        #[derive(type_fields::macros::monoid::Mempty, type_fields::macros::monoid::Mconcat)]
-        #input
-    )
-    .into()
+#[proc_macro_derive(Monoid)]
+pub fn monoid(input: TokenStream) -> TokenStream {
+    let mempty = mempty(input.clone());
+    let mconcat = mconcat(input.clone());
+    mempty.into_iter().chain(mconcat.into_iter()).collect()
 }
 
 // Derive `Mempty` for a newtype.
@@ -313,14 +296,16 @@ newtype_derive! {
     }
 }
 
-#[proc_macro_attribute]
-pub fn foldable(_: TokenStream, input: TokenStream) -> TokenStream {
-    let input: proc_macro2::TokenStream = input.into();
-    quote::quote!(
-        #[derive(type_fields::macros::foldable::FoldMap, type_fields::macros::foldable::Foldl, type_fields::macros::foldable::Foldr)]
-        #input
-    )
-    .into()
+#[proc_macro_derive(Foldable)]
+pub fn foldable(input: TokenStream) -> TokenStream {
+    let fold_map = fold_map(input.clone());
+    let foldl = foldl(input.clone());
+    let foldr = foldr(input);
+    fold_map
+        .into_iter()
+        .chain(foldl.into_iter())
+        .chain(foldr.into_iter())
+        .collect()
 }
 
 // Derive `FoldMap` for a newtype.
@@ -404,14 +389,11 @@ newtype_derive! {
     }
 }
 
-#[proc_macro_attribute]
-pub fn category(_: TokenStream, input: TokenStream) -> TokenStream {
-    let input: proc_macro2::TokenStream = input.into();
-    quote::quote!(
-        #[derive(type_fields::macros::category::Id, type_fields::macros::category::Compose)]
-        #input
-    )
-    .into()
+#[proc_macro_derive(Category)]
+pub fn category(input: TokenStream) -> TokenStream {
+    let id = id(input.clone());
+    let compose = compose(input.clone());
+    id.into_iter().chain(compose.into_iter()).collect()
 }
 
 // Derive `Id` for a `Function`.
@@ -439,20 +421,19 @@ newtype_derive! {
     }
 }
 
-#[proc_macro_attribute]
-pub fn arrow(_: TokenStream, input: TokenStream) -> TokenStream {
-    let input: proc_macro2::TokenStream = input.into();
-    quote::quote!(
-        #[derive(
-            type_fields::macros::arrow::Arr,
-            type_fields::macros::arrow::Split,
-            type_fields::macros::arrow::Fanout,
-            type_fields::macros::arrow::First,
-            type_fields::macros::arrow::Second
-        )]
-        #input
-    )
-    .into()
+#[proc_macro_derive(Arrow)]
+pub fn arrow(input: TokenStream) -> TokenStream {
+    let arr = arr(input.clone());
+    let split = split(input.clone());
+    let fanout = fanout(input.clone());
+    let first = arrow_first(input.clone());
+    let second = arrow_second(input.clone());
+    arr.into_iter()
+        .chain(split.into_iter())
+        .chain(fanout.into_iter())
+        .chain(first.into_iter())
+        .chain(second.into_iter())
+        .collect()
 }
 
 // Derive `Arr` for a `Function`.
@@ -530,8 +511,8 @@ newtype_derive! {
 
             fn fanout(self, f: _Arrow) -> Self::Fanout {
                 type_fields::t_funk::ComposeL::compose_l(
-                    <#ident<#ty> as type_fields::t_funk::Arr<type_fields::t_funk::MakePair>>::arr(crate::t_funk::MakePair),
-                    crate::t_funk::Split::split(self, f)
+                    <#ident<#ty> as type_fields::t_funk::Arr<type_fields::t_funk::MakePair>>::arr(type_fields::t_funk::MakePair),
+                    type_fields::t_funk::Split::split(self, f)
                 )
             }
         }
